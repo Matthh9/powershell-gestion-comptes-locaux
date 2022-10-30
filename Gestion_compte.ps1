@@ -13,9 +13,9 @@ function afficher_choix {
     )
     $erreur="Erreur le choix n'est pas disponible : "
 
-    clear
+    #clear
 
-    Write-Host $Texte_intruductif -ForegroundColor Green
+    Write-Host $Texte_intruductif
 
     for($i = 0; $i -lt $options.length; $i++){ 
         Write-Host "  "$i" - " $options[$i] 
@@ -40,20 +40,37 @@ function menu {
 
 
 function creation_user {
-    clear
-    Write-Host "création d'un utilisateur" -ForegroundColor Green
+    Write-Host "création d'un utilisateur"
 }
 
 
 function gestion_user {
-    $get_user_resultat = Get-LocalUser
-    $choix = afficher_choix "modification d'un utilisateur" $get_user_resultat
+    $get_user_resultat= Get-LocalUser
+    $index_user= afficher_choix "modification d'un utilisateur" $get_user_resultat
+    $user= $get_user_resultat[$index_user]
 
-    #on fait ça parce que la fonction selectionner_user retourn la valeur en double
+    $modification = afficher_choix $info_user"Quelle modification voulez-vous effectuer ?" @("Password","renomer le compte","Description","Full name","desactiver/reactiver un compte","supprimer un compte")
 
-    Write-Host "user returné" $choix
-            
+    if($modification -eq 0){
+        Write-Host "modification du MDP"
 
+    }elseif($modification -eq 4){
+        if($user.Enabled){ 
+            Write-Host "Désactivation du compte"
+            Disable-LocalUser -Name $user
+        }else{
+            Write-Host "Activation du compte"
+            Enable-LocalUser -Name $user
+        }
+    }else{
+        $new_value = Read-Host "Nouvelle valeur"
+        Switch ($modification){
+            1 {Rename-LocalUser -Name $user -NewName $new_value}
+            2 {Set-LocalUser -Name $user -Description $new_value}
+            3 {Set-LocalUser -Name $user -FullName $new_value}
+            5 {Remove-LocalUser -Name $user}
+        }
+    }
 }
 
 
