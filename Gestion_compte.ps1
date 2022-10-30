@@ -62,13 +62,14 @@ function gestion_user {
             Write-Host "Activation du compte"
             Enable-LocalUser -Name $user
         }
+    }elseif($modification -eq 5){
+        Remove-LocalUser -Name $user
     }else{
         $new_value = Read-Host "Nouvelle valeur"
         Switch ($modification){
             1 {Rename-LocalUser -Name $user -NewName $new_value}
             2 {Set-LocalUser -Name $user -Description $new_value}
             3 {Set-LocalUser -Name $user -FullName $new_value}
-            5 {Remove-LocalUser -Name $user}
         }
     }
 }
