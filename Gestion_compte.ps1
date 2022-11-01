@@ -29,22 +29,31 @@ if (!
 }
 
 function mot_de_passe {
-    #Construction de la fonction à l'aide des commandes de cette page :
-    #https://morgantechspace.com/2018/05/how-to-get-password-from-user-with-mask-powershell.html
+    param (
+        $user
+    )
 
-    $secure_mdp = Read-Host -Prompt "Entrer le mot de passe" -AsSecureString
-    $secure_mdp2 = Read-Host -Prompt "Entrer le mot de passe à nouveau" -AsSecureString
+    function saisie-mdp {
+        #Construction de la fonction à l'aide des commandes de cette page :
+        #https://morgantechspace.com/2018/05/how-to-get-password-from-user-with-mask-powershell.html
+
+        $secure_mdp = Read-Host -Prompt "Entrer le mot de passe" -AsSecureString
+        $secure_mdp2 = Read-Host -Prompt "Entrer le mot de passe à nouveau" -AsSecureString
     
-    #la commande suivante permet de déchiffrer le mot de passe
-    $plain_mdp = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto( [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure_mdp) )
-    $plain_mdp2 = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto( [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure_mdp2) )
+        #la commande suivante permet de déchiffrer le mot de passe
+        $plain_mdp = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto( [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure_mdp) )
+        $plain_mdp2 = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto( [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure_mdp2) )
 
 
-    if ($plain_mdp -cne $plain_mdp2){ #-c pour être case sensitive, ne pour not equal pour reboucler si les mot de passe ne correspondent pas après validation on relance la fonction pour avoir 2 mdp identiques
-        $secure_mdp = mot_de_passe
+        if ($plain_mdp -cne $plain_mdp2){ #-c pour être case sensitive, ne pour not equal pour reboucler si les mot de passe ne correspondent pas après validation on relance la fonction pour avoir 2 mdp identiques
+            $secure_mdp = saisie-mdp
+        }
+    
+        return $secure_mdp #il faut retourner un secure string sinon ça tombe en erreur
     }
-    
-    return $secure_mdp #il faut retourner un secure string sinon ça tombe en erreur
+
+    $mdp = saisie-mdp
+    Set-LocalUser -Name $user -Password $mdp
 }
 
 
@@ -89,9 +98,7 @@ function creation_user {
 
     $choix = afficher_choix "Voulez-vous ajouter un mot de passe ?" @("Oui","Non")
     if($choix -eq 0){
-        $mdp = mot_de_passe
-        Write-Host $mdp
-        Set-LocalUser -Name $nom -Password $mdp
+        mot_de_passe $user
     }
 }
 
@@ -103,10 +110,7 @@ function gestion_user {
 
     $modification = afficher_choix $info_user"Quelle modification voulez-vous effectuer ?" @("Password","renomer le compte","Description","Full name","desactiver/reactiver un compte","supprimer un compte")
 
-    if($modification -eq 0){
-        Write-Host "modification du MDP"
-
-    }elseif($modification -eq 4){
+    if($modification -eq 4){
         if($user.Enabled){ 
             Write-Host "Désactivation du compte"
             Disable-LocalUser -Name $user
@@ -114,14 +118,14 @@ function gestion_user {
             Write-Host "Activation du compte"
             Enable-LocalUser -Name $user
         }
-    }elseif($modification -eq 5){
-        Remove-LocalUser -Name $user
     }else{
         $new_value = Read-Host "Nouvelle valeur"
         Switch ($modification){
+            0 {mot_de_passe $user}
             1 {Rename-LocalUser -Name $user -NewName $new_value}
             2 {Set-LocalUser -Name $user -Description $new_value}
             3 {Set-LocalUser -Name $user -FullName $new_value}
+            5 {Remove-LocalUser -Name $user}
         }
     }
 }
@@ -129,5 +133,3 @@ function gestion_user {
 
 
 menu "Bonjour, bienvenu dans l'utilitaire de gestion des comptes locaux"
-
-#$Password = Read-Host -AsSecureString
