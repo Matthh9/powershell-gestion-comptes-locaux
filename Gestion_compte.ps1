@@ -64,10 +64,11 @@ function afficher_choix {
     param (
         $Texte_intruductif,
         $options #tableau avec les différents choix
+
     )
     $erreur="Erreur le choix n'est pas disponible : "
 
-    #clear
+    clear
 
     Write-Host $Texte_intruductif
 
@@ -83,6 +84,7 @@ function afficher_choix {
 
 
 function creation_user {
+    clear
     Write-Host "création d'un utilisateur"
 
     $nom = Read-Host "Nom d'utilisateur"
@@ -153,4 +155,5 @@ function menu {
 }
 
 
+clear
 menu "Bonjour, bienvenu dans l'utilitaire de gestion des comptes locaux"
