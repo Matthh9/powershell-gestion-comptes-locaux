@@ -94,6 +94,20 @@ function creation_user {
     if($choix -eq 0){
         mot_de_passe $user
     }
+
+    $choix = afficher_choix "Ajouter dans un Nouveau groupe ou groupe Existant ?" @("Nouveau groupe","Groupe existant")
+    if($choix -eq 0){
+        $nom_groupe = Read-Host "Nom du nouveau groupe"
+        $description_groupe = Read-Host "Description du nouveau groupe"
+
+        Add-LocalGroupMember -Group $nom_groupe -Member $user
+    }else{
+        $get_groupe_resultat = Get-LocalGroup
+        $index_goupe= afficher_choix "Choix du groupe à ajouter" $get_groupe_resultat
+        $groupe= $get_groupe_resultat[$index_goupe]
+        Add-LocalGroupMember -Group $groupe -Member $user
+    }
+
 }
 
 
@@ -104,7 +118,12 @@ function gestion_user {
 
     $modification = afficher_choix $info_user"Quelle modification voulez-vous effectuer ?" @("Password","renomer le compte","Description","Full name","desactiver/reactiver un compte","supprimer un compte")
 
-    if($modification -eq 4){
+    # traitement à part des cas particuliers
+    if($modification -eq 0){
+        mot_de_passe $user
+    }elseif($modification -eq 5){
+        Remove-LocalUser -Name $user
+    }elseif($modification -eq 4){
         if($user.Enabled){ 
             Write-Host "Désactivation du compte"
             Disable-LocalUser -Name $user
@@ -112,14 +131,13 @@ function gestion_user {
             Write-Host "Activation du compte"
             Enable-LocalUser -Name $user
         }
+    #traitement des autres cas qui peuvent être traités de la même manière
     }else{
         $new_value = Read-Host "Nouvelle valeur"
         Switch ($modification){
-            0 {mot_de_passe $user}
             1 {Rename-LocalUser -Name $user -NewName $new_value}
             2 {Set-LocalUser -Name $user -Description $new_value}
             3 {Set-LocalUser -Name $user -FullName $new_value}
-            5 {Remove-LocalUser -Name $user}
         }
     }
 }
