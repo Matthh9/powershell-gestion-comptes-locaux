@@ -28,6 +28,10 @@ if (!
     exit
 }
 
+
+
+
+
 function mot_de_passe {
     param (
         $user
@@ -44,12 +48,11 @@ function mot_de_passe {
         $plain_mdp = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto( [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure_mdp) )
         $plain_mdp2 = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto( [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure_mdp2) )
 
-
         if ($plain_mdp -cne $plain_mdp2){ #-c pour être case sensitive, ne pour not equal pour reboucler si les mot de passe ne correspondent pas après validation on relance la fonction pour avoir 2 mdp identiques
             $secure_mdp = saisie-mdp
         }
     
-        return $secure_mdp #il faut retourner un secure string sinon ça tombe en erreur
+        return $secure_mdp #il faut retourner un secure string sinon ça tombe en erreur quand on essaye de passer la commande : Set-LocalUser -Name $user -Password $mdp
     }
 
     $mdp = saisie-mdp
@@ -76,15 +79,6 @@ function afficher_choix {
     if($options -contains $options[$choix]){
         return $choix
     } else { afficher_choix $erreur$Texte_intruductif $options }
-}
-
-function menu {
-    $choix = afficher_choix "Choix d'une action" @('Créer un utilisateur', 'Modifier un utilisateur')
-
-    Switch ($choix){
-        0 {creation_user}
-        1 {gestion_user}
-    }
 }
 
 
@@ -130,6 +124,15 @@ function gestion_user {
     }
 }
 
+
+function menu {
+    $choix = afficher_choix "Choix d'une action" @('Créer un utilisateur', 'Modifier un utilisateur')
+
+    Switch ($choix){
+        0 {creation_user}
+        1 {gestion_user}
+    }
+}
 
 
 menu "Bonjour, bienvenu dans l'utilitaire de gestion des comptes locaux"
