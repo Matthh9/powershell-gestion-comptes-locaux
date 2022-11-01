@@ -4,12 +4,36 @@ Date :
 
 #>
 
-#Requires -RunAsAdministrator
+
+#Code trouvé ici : https://serverfault.com/questions/11879/gaining-administrator-privileges-in-powershell
+#le Code permet de redémarrer un shell en admin pour effectuer les commandes sur les comptes parce que les commandes qui touchent aux comptes ont besoin d'être admin pour être lancées
+if (!
+    #current role
+    (New-Object Security.Principal.WindowsPrincipal(
+        [Security.Principal.WindowsIdentity]::GetCurrent()
+    #is admin?
+    )).IsInRole(
+        [Security.Principal.WindowsBuiltInRole]::Administrator
+    )
+) {
+    #elevate script and exit current non-elevated runtime
+    Start-Process `
+        -FilePath 'powershell' `
+        -ArgumentList (
+            #flatten to single array
+            '-File', $MyInvocation.MyCommand.Source, $args `
+            | %{ $_ }
+        ) `
+        -Verb RunAs
+    exit
+}
+
+
 
 function afficher_choix {
     param (
         $Texte_intruductif,
-        $options
+        $options #tableau avec les différents choix
     )
     $erreur="Erreur le choix n'est pas disponible : "
 
@@ -26,7 +50,6 @@ function afficher_choix {
     if($options -contains $options[$choix]){
         return $choix
     } else { afficher_choix $erreur$Texte_intruductif $options }
-
 }
 
 function menu {
@@ -46,7 +69,7 @@ function creation_user {
 
 function gestion_user {
     $get_user_resultat= Get-LocalUser
-    $index_user= afficher_choix "modification d'un utilisateur" $get_user_resultat
+    $index_user= afficher_choix "Modification d'un utilisateur" $get_user_resultat
     $user= $get_user_resultat[$index_user]
 
     $modification = afficher_choix $info_user"Quelle modification voulez-vous effectuer ?" @("Password","renomer le compte","Description","Full name","desactiver/reactiver un compte","supprimer un compte")
