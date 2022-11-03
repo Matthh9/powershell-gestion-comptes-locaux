@@ -38,10 +38,14 @@ function mot_de_passe {
     )
 
     function saisie-mdp {
+        param (
+            $messageErreur
+        )
+
         #Construction de la fonction à l'aide des commandes de cette page :
         #https://morgantechspace.com/2018/05/how-to-get-password-from-user-with-mask-powershell.html
 
-        $secure_mdp = Read-Host -Prompt "Entrer le mot de passe" -AsSecureString
+        $secure_mdp = Read-Host -Prompt $messageErreur"Entrer le mot de passe" -AsSecureString
         $secure_mdp2 = Read-Host -Prompt "Entrer le mot de passe à nouveau" -AsSecureString
     
         #la commande suivante permet de déchiffrer le mot de passe
@@ -49,7 +53,7 @@ function mot_de_passe {
         $plain_mdp2 = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto( [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure_mdp2) )
 
         if ($plain_mdp -cne $plain_mdp2){ #-c pour être case sensitive, ne pour not equal pour reboucler si les mot de passe ne correspondent pas après validation on relance la fonction pour avoir 2 mdp identiques
-            $secure_mdp = saisie-mdp
+            $secure_mdp = saisie-mdp "Erreur les mot de passe ne correspondent pas : "
         }
     
         return $secure_mdp #il faut retourner un secure string sinon ça tombe en erreur quand on essaye de passer la commande : Set-LocalUser -Name $user -Password $mdp
@@ -63,13 +67,15 @@ function mot_de_passe {
 function afficher_choix {
     param (
         $Texte_intruductif,
-        $options #tableau avec les différents choix
-
+        $options, #tableau avec les différents choix
+        $messageErreur
     )
-    $erreur="Erreur le choix n'est pas disponible : "
 
     clear
 
+    if($messageErreur.Length){
+        Write-Host $messageErreur
+    }
     Write-Host $Texte_intruductif
 
     for($i = 0; $i -lt $options.length; $i++){ 
@@ -79,7 +85,7 @@ function afficher_choix {
 
     if($options -contains $options[$choix]){
         return $choix
-    } else { afficher_choix $erreur$Texte_intruductif $options }
+    } else { afficher_choix $Texte_intruductif $options "Erreur : la sélection ne fait pas partie du choix possible"}
 }
 
 
