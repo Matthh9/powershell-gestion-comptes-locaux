@@ -32,6 +32,18 @@ if (!
 
 
 
+function texte_non_vide{
+    param (
+        $texte
+    )
+
+    while ($texte -eq ""){
+        $texte = Read-Host "Désolé le choix ne peux pas être nul"
+    }
+    return $texte
+}
+
+
 function mot_de_passe {
     param (
         $user
@@ -66,9 +78,10 @@ function mot_de_passe {
 
 function afficher_choix {
     param (
-        $Texte_intruductif,
+        $texte_intruductif,
         $options, #tableau avec les différents choix
-        $messageErreur
+        $messageErreur,
+        $non_vide = $false
     )
 
     clear
@@ -76,40 +89,46 @@ function afficher_choix {
     if($messageErreur.Length){
         Write-Host $messageErreur
     }
-    Write-Host $Texte_intruductif
+    Write-Host $texte_intruductif
 
     for($i = 0; $i -lt $options.length; $i++){ 
         Write-Host "  "$i" - " $options[$i] 
     }
     $choix = Read-Host "Choix"
 
+    if($non_vide){
+        $choix = texte_non_vide $choix
+    }
+
     if($options -contains $options[$choix]){
         return $choix
-    } else { afficher_choix $Texte_intruductif $options "Erreur : la sélection ne fait pas partie du choix possible"}
+    } else { afficher_choix $texte_intruductif $options "Erreur : la sélection ne fait pas partie du choix possible"}
 }
 
 
 function creation_user {
     clear
-    Write-Host "création d'un utilisateur"
+    Write-Host "Création d'un utilisateur"
 
     $nom = Read-Host "Nom d'utilisateur"
+    $nom = texte_non_vide $nom
     $description = Read-Host "Description du compte"
     $fullname = Read-Host "Nom complet du compte"
     $user = New-LocalUser -Name $nom -Description $description -FullName $fullname -NoPassword
 
-    $choix = afficher_choix "Voulez-vous ajouter un mot de passe ?" @("Oui","Non")
+    $choix = afficher_choix "Voulez-vous ajouter un mot de passe ?" @("Oui","Non") -non_vide $true
     if($choix -eq 0){
         mot_de_passe $user
     }
 
-    $choix = afficher_choix "Ajouter dans un Nouveau groupe ou groupe Existant ?" @("Nouveau groupe","Groupe existant")
+    $choix = afficher_choix "Ajouter dans un Nouveau groupe ou groupe Existant ?" @("Nouveau groupe","Groupe existant") -non_vide $true
     if($choix -eq 0){
         $nom_groupe = Read-Host "Nom du nouveau groupe"
         $description_groupe = Read-Host "Description du nouveau groupe"
 
         Add-LocalGroupMember -Group $nom_groupe -Member $user
     }else{
+        Write-Host "use :r"$user
         $get_groupe_resultat = Get-LocalGroup
         $index_goupe= afficher_choix "Choix du groupe à ajouter" $get_groupe_resultat
         $groupe= $get_groupe_resultat[$index_goupe]
@@ -121,10 +140,10 @@ function creation_user {
 
 function gestion_user {
     $get_user_resultat= Get-LocalUser
-    $index_user= afficher_choix "Modification d'un utilisateur" $get_user_resultat
+    $index_user= afficher_choix "Modification d'un utilisateur" $get_user_resultat -non_vide $true
     $user= $get_user_resultat[$index_user]
 
-    $modification = afficher_choix $info_user"Quelle modification voulez-vous effectuer ?" @("Password","renomer le compte","Description","Full name","desactiver/reactiver un compte","supprimer un compte")
+    $modification = afficher_choix $info_user"Quelle modification voulez-vous effectuer ?" @("Password","renomer le compte","Description","Full name","desactiver/reactiver un compte","supprimer un compte") -non_vide $true
 
     # traitement à part des cas particuliers
     if($modification -eq 0){
@@ -152,7 +171,7 @@ function gestion_user {
 
 
 function menu {
-    $choix = afficher_choix "Choix d'une action" @('Créer un utilisateur', 'Modifier un utilisateur')
+    $choix = afficher_choix "Choix d'une action" @('Créer un utilisateur', 'Modifier un utilisateur') -non_vide $true
 
     Switch ($choix){
         0 {creation_user}
