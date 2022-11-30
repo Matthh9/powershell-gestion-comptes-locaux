@@ -181,4 +181,4 @@ function menu {
 
 
 clear
-menu "Bonjour, bienvenu dans l'utilitaire de gestion des comptes locaux"
+menu
